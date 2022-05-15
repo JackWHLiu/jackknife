@@ -1,5 +1,7 @@
 package com.lwh.jackknife.crash.policy
 
+import android.annotation.TargetApi
+import android.os.Build
 import android.os.Environment
 import android.util.Log
 import com.lwh.jackknife.crash.group.CrashGroup
@@ -17,7 +19,13 @@ import java.util.*
  */
 class StoragePolicy : CrashReportPolicy {
 
+    /**
+     * 由于Android11的机制，该方案被淘汰。
+     */
+    @Deprecated("使用path替代")
     private var folderName = ""//手机系统根目录保存日志文件夹的名称
+
+    private var path = ""
 
     constructor(folderName: String = "jackknife", group: CrashGroup = DefaultCrashGroup(),
                 policy: CrashReportPolicy? = null) : super(
@@ -27,14 +35,24 @@ class StoragePolicy : CrashReportPolicy {
         this.folderName = folderName
     }
 
+    constructor(folderName: String = "jackknife",
+                path: String = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).absolutePath}/${folderName}",
+                group: CrashGroup = DefaultCrashGroup(),
+                policy: CrashReportPolicy? = null) : super(
+        group,
+        policy
+    ) {
+        this.folderName = folderName
+        this.path = path
+    }
+
     override fun report(info: CrashInfo, group: CrashGroup) {
         super.report(info, group)
         try {
             if (group.matches()) {
-                val path = Environment.getExternalStorageDirectory().absolutePath
                 val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss")
                 val time = simpleDateFormat.format(Date())
-                val folder = File(path, folderName)
+                val folder = File(path)
                 folder.mkdirs()
                 val file = File(folder.absolutePath, "crash$time.txt")
                 if (!file.exists()) {
